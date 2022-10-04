@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import daph from "daph";
+import { Logger } from "@hammerhq/logger";
+import tool from "@hammerhq/cli-tool";
 import ngrok from "ngrok";
-import * as pogger from "pogger";
-import { removeProperties } from "remove-properties";
 
-daph.createCommand(
+const logger = new Logger("NGROK");
+
+tool.createCommand(
 	{
 		name: "auth",
 		usage: "<auth_token>",
@@ -13,24 +14,25 @@ daph.createCommand(
 		category: "Authorization",
 		aliases: ["login", "token"],
 		description: "Sets NGROK auth token",
-		argDefinitions: [
+		options: [
 			{
 				name: "token",
 				type: String,
-				default: true,
+				defaultOption: true,
 			},
 		],
 	},
-	async (_command, args) => {
-		pogger.event(`Authenticating NGROK with token ${args.token}`);
+	async (args) => {
+		logger.event(`Authenticating NGROK with token ${args.token}`);
+
 		ngrok
 			.authtoken(args.token as string)
-			.then(() => pogger.success("NGROK authenticated!"))
+			.then(() => logger.success("NGROK authenticated!"))
 			.catch((e) => {
-				pogger.error(
+				logger.error(
 					`An error occured while authenticating with token ${args.token}`,
 				);
-				pogger.warning(e);
+				logger.warning(e);
 			});
 	},
 )
@@ -49,54 +51,48 @@ daph.createCommand(
 			category: "Serve",
 			aliases: ["run", "tunnel", "host", "start", "connect"],
 			description: "Starts NGROK tunnel",
-			argDefinitions: [
+			options: [
 				{
 					name: "addr",
 					type: Number,
-					default: true,
-					isOptional: false,
+					defaultOption: true,
 				},
 				{
 					name: "proto",
 					type: String,
-					default: false,
-					isOptional: true,
+					defaultOption: false,
 				},
 				{
 					name: "auth",
 					type: String,
-					default: false,
-					isOptional: true,
+					defaultOption: false,
 				},
 				{
 					name: "subdomain",
 					type: String,
-					default: false,
-					isOptional: true,
+					defaultOption: false,
 				},
 				{
 					name: "authtoken",
 					type: String,
-					default: false,
-					isOptional: true,
+					defaultOption: false,
 				},
 				{
 					name: "region",
 					type: String,
-					default: false,
-					isOptional: true,
+					defaultOption: false,
 				},
 			],
 		},
-		async (_command, args) => {
-			pogger.event("Starting NGROK tunnel");
-			const options = removeProperties(args, ["_unknown"]);
+		async (args) => {
+			logger.event("Starting NGROK tunnel");
+
 			ngrok
-				.connect(options)
-				.then((url) => pogger.success(`NGROK tunnel started on ${url}`))
+				.connect(args)
+				.then((url) => logger.success(`NGROK tunnel started on ${url}`))
 				.catch((e) => {
-					pogger.error("An error occured while starting tunnel");
-					pogger.warning(e);
+					logger.error("An error occured while starting tunnel");
+					logger.warning(e);
 				});
 		},
 	)
